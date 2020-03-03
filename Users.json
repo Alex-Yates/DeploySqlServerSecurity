@@ -1,0 +1,20 @@
+{
+    "Users": [
+        {
+            "name": "ExampleUser",
+            "login": "ExampleLogin",
+            "LoginType": "WindowsUser",
+            "AuthType": "Windows",
+            "DefaultSchema": "dbo",
+            "Environments": ["dev"]
+        },
+        {
+            "name": "ExampleUser",
+            "login": "ExampleLogin",
+            "LoginType": "WindowsUser",
+            "AuthType": "Windows",
+            "DefaultSchema": "dbo",
+            "Environments": ["dev", "prod"]
+        }
+    ]
+}
