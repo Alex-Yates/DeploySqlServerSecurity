@@ -1,11 +1,7 @@
 param(
-#    [Parameter(Mandatory)][ValidateNotNullOrEmpty()]$SQLInstance = ".",
-#    [Parameter(Mandatory)][ValidateNotNullOrEmpty()]$Database = "ChrisFootball",
-#	[Parameter(Mandatory)][ValidateNotNullOrEmpty()]$Environment = "Dev",
-[ValidateNotNullOrEmpty()]$SQLInstance = ".",
-[ValidateNotNullOrEmpty()]$Database = "ChrisFootball",
-[ValidateNotNullOrEmpty()]$Environment = "Dev",
-
+    [Parameter(Mandatory)][ValidateNotNullOrEmpty()]$SQLInstance,
+    [Parameter(Mandatory)][ValidateNotNullOrEmpty()]$Database,
+	[Parameter(Mandatory)][ValidateNotNullOrEmpty()]$Environment,
     $OutputDir = ""
 )
 
