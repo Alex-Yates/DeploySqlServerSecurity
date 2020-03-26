@@ -8,25 +8,28 @@ param(
 import-module dbatools
 $ErrorActionPreference = "stop"
 
+# Making the output directory
 if ($OutputDir -like ""){
 	$OutputDir = Join-Path -Path $PSScriptRoot -ChildPath "output"
 }
 $OutputDir = Join-Path -Path $OutputDir -ChildPath "$SQLInstance\$Database\source"
+$UsersFile = Join-Path -Path $OutputDir -ChildPath "users.json"
 
 If(Test-Path -path $OutputDir){   
-    Write-Output "Deleted existing file : $OutputDir"
-    Remove-Item -Path $OutputDir -Recurse | out-null  #One way of making sure no output makes it to the console.
-    }
+    Write-Output "Output directory already exists: $OutputDir" 
+}
+else {
+    Write-Output "Creating output directory: $OutputDir"
+    New-Item -Path $OutputDir -ItemType Directory | out-null
+}
 
-Write-Output "Creating output directory: $OutputDir"
-New-Item -Path $OutputDir -ItemType Directory | out-null
-$usersFile = New-Item -Path $OutputDir\users.json -ItemType File
-
+# Getting all the users
 Write-Output "Reading existing users on $SQLInstance.$Database"
 $rawUsers = Get-DbaDbUser -SqlInstance $SQLInstance -Database $Database -ExcludeSystemUser
 
+# Simplifying our data
 Write-Output "Reformatting the data."
-$simplifiedUsers = @()
+$SimplifiedUsers = @()
 
 foreach ($user in $rawUsers){    
     $tempUser = New-Object PSObject -Property @{
@@ -36,11 +39,11 @@ foreach ($user in $rawUsers){
         Environment = @()
     }
     $tempUser.Environment = $tempUser.Environment + $Environment
-    $simplifiedUsers = $simplifiedUsers + $tempUser
+    $SimplifiedUsers = $SimplifiedUsers + $tempUser
 }
 
+# Exporting our data
+$SimplifiedUsers =  $SimplifiedUsers | ConvertTo-Json 
 
-$simplifiedUsers =  $simplifiedUsers | ConvertTo-Json 
-
-Write-Output "Writing simplified user data to $usersFile"
-$simplifiedUsers | Out-File -FilePath $usersFile
+Write-Output "Writing simplified user data to $UsersFile"
+$SimplifiedUsers | Out-File -FilePath $UsersFile
