@@ -71,14 +71,12 @@ if (Test-Path -path $UsersFile){
 
 $NewUsers = @()
 
-# Case 1 (See multi-line commen above)
-Write-Output "Merging users that exist in both DB and output directory."
+# Case 1 and Case 2, see abpove
+Write-Output "Adding new users and merging existing users."
 For ($i=0; $i -lt $DbUsers.Length; $i++){
         # If there are multiple name matches, this will only find the first one!
     $IdMatch = -1
     if($SourceUsers.Name -contains $DbUsers[$i].Name){
-        $msg = "User " + $DbUsers[$i].Name + " already exists in output directory. Merging user properties."
-        Write-Output $msg
         $IdMatch = [array]::IndexOf($SourceUsers.Name,$DbUsers[$i].Name)
          # Checking Default schema matches
         if ($DbUsers[$i].DefaultSchema -notlike $SourceUsers[$IdMatch].DefaultSchema){
@@ -106,19 +104,66 @@ For ($i=0; $i -lt $DbUsers.Length; $i++){
     } 
     $tempUser.Environment = $tempUser.Environment + $Environment
     if ($IdMatch -ne -1){
+        $msg = "Merging existing user properties: " + $DbUsers[$i].Name
+        Write-Output $msg
         $tempUser.Environment = $tempUser.Environment + $SourceUsers[$IdMatch].Environment
         $tempUser.Environment = $tempUser.Environment | select -unique
+    }
+    else{
+        $msg = "Adding new user: " + $DbUsers[$i].Name
+        Write-Output $msg
     }
     # Adding new user to $NewUsers
     $NewUsers = $NewUsers + $tempUser  
 }
-# Case 2 (See multi-line commen above)
-Write-Output "Adding users that exist in DB but not in output directory."
-Write-Warning "Implement this merge functionality!"
 
-# Case 3 (See multi-line commen above)
-Write-Output "Removing users that exist in output directory but do not exist in DB."
-Write-Warning "Implement this merge functionality!"
+# Case 3 (See multi-line comment above)
+For ($i=0; $i -lt $SourceUsers.Length; $i++){
+    if(($DbUsers.Name -notcontains $SourceUsers[$i].Name) -and ($SourceUsers[$i].Environment -contains $Environment)){
+        # Warning the user we are about to remove code from output dir
+        $msg = "User " + $SourceUsers[$i].Name + " exists on output directory for environment $Environment, but is not in $SQLInstance.$Database."
+        Write-Output $msg
+        $warning = "Removing user " + $SourceUsers[$i].Name + " from $Environment environment in output directory."
+        Write-Warning $warning
+        
+        # Creating a revised version of the source user
+        $tempUser = New-Object PSObject -Property @{
+            Name = $SourceUsers[$i].Name
+            Login = $SourceUsers[$i].Login
+            DefaultSchema = $SourceUsers[$i].DefaultSchema  
+                Environment = $SourceUsers[$i].Environment 
+        } 
+        # Renmoving $Environment from $tempUser.Environment
+        $tempUser.Environment = $tempUser.Environment -ne $Environment
+        
+        # Only including the source user if it still belongs to at least one environment
+        if ($tempUser.Environment.Length -ne 0){
+            # The source users still exists in other environments, so it needs to be included
+            $NewUsers = $NewUsers + $tempUser  
+        }
+        else{
+            $warning = "User " + $SourceUsers[$i].Name + " no longer exists in any environments. Removing " + $SourceUsers[$i].Name + " from output directory."
+            Write-Warning $warning
+        }
+    }
+    if(($DbUsers.Name -notcontains $SourceUsers[$i].Name) -and ($SourceUsers[$i].Environment -notcontains $Environment)){
+        # Creating a revised version of the source user
+        $tempUser = New-Object PSObject -Property @{
+            Name = $SourceUsers[$i].Name
+            Login = $SourceUsers[$i].Login
+            DefaultSchema = $SourceUsers[$i].DefaultSchema  
+                Environment = $SourceUsers[$i].Environment 
+        } 
+        # Renmoving $Environment from $tempUser.Environment
+        $tempUser.Environment = $tempUser.Environment -ne $Environment
+        
+        # Only including the source user if it still belongs to at least one environment
+        if ($tempUser.Environment.Length -ne 0){
+            # The source users still exists in other environments, so it needs to be included
+            $NewUsers = $NewUsers + $tempUser  
+        }
+    }
+}
 
 # Removing old UsersFile
 if (Test-Path -path $UsersFile){
