@@ -8,6 +8,8 @@ param(
 import-module dbatools
 $ErrorActionPreference = "stop"
 
+Test-DbaConnection $SQLInstance | out-null
+
 # Making the output directory
 if ($OutputDir -like ""){
 	$OutputDir = Join-Path -Path $PSScriptRoot -ChildPath "output"
