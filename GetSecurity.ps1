@@ -131,7 +131,7 @@ For ($i=0; $i -lt $SourceUsers.Length; $i++){
             Name = $SourceUsers[$i].Name
             Login = $SourceUsers[$i].Login
             DefaultSchema = $SourceUsers[$i].DefaultSchema  
-                Environment = $SourceUsers[$i].Environment 
+            Environment = $SourceUsers[$i].Environment 
         } 
         # Renmoving $Environment from $tempUser.Environment
         $tempUser.Environment = $tempUser.Environment -ne $Environment
@@ -152,7 +152,7 @@ For ($i=0; $i -lt $SourceUsers.Length; $i++){
             Name = $SourceUsers[$i].Name
             Login = $SourceUsers[$i].Login
             DefaultSchema = $SourceUsers[$i].DefaultSchema  
-                Environment = $SourceUsers[$i].Environment 
+            Environment = $SourceUsers[$i].Environment 
         } 
         # Renmoving $Environment from $tempUser.Environment
         $tempUser.Environment = $tempUser.Environment -ne $Environment
