@@ -46,7 +46,7 @@ ForEach ($user in $SourceUsers){
                 $warning = $warning + "The login in source code is " + $user.Login + ". "
                 $warning = $warning + "Dropping the user and re-deploying with the correct login." 
                 Write-Warning "D'oh: $warning"
-                Remove-DbaDbUser -SqlInstance $SQLInstance -Database $Database -User $user.Name 
+                Remove-DbaDbUser -User $user.Name -SqlInstance $SQLInstance -Database $Database
                 $msg = "Re-deploying " + $user.Name 
                 Write-Host $msg
                 New-DbaDbUser -SqlInstance $SQLInstance -Database $Database -Login $user.Login -Username $user.Name                
