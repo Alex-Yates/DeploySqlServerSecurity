@@ -1,7 +1,7 @@
 # DeploySqlServerSecurity
 A bottom up rebuild of: https://github.com/Alex-Yates/GeneratePermissions
 
-This repo is currently a thought experiment of just psuedo code
+Still a work in progress.
 
 The idea is that you could baseline your security by running GetSecurity.ps1. This will read a source database and populate the .json files in /source/ with all the info about the users/roles in a database. You could also tag this data with an environment tag (e.g. "dev" or "prod") allowing you to version the security for different environments separately.
 
