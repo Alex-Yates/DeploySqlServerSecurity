@@ -2,7 +2,8 @@ param(
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()]$SQLInstance,
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()]$Database,
 	[Parameter(Mandatory)][ValidateNotNullOrEmpty()]$Environment,
-    [Parameter(Mandatory)][ValidateNotNullOrEmpty()]$SourceDir
+    [Parameter(Mandatory)][ValidateNotNullOrEmpty()]$SourceDir,
+    [switch]$DeleteAdditional = $false
 )
 
 import-module dbatools
@@ -52,7 +53,7 @@ ForEach ($user in $SourceUsers){
                 New-DbaDbUser -SqlInstance $SQLInstance -Database $Database -Login $user.Login -Username $user.Name                
             }
             if ($userMatches){
-               $msg = $user.Name + "already installed correctly." 
+               $msg = $user.Name + " already installed correctly." 
                Write-Host $msg
             }
         }
@@ -64,3 +65,39 @@ ForEach ($user in $SourceUsers){
         }
     }
 }
+
+ForEach ($user in $dbUsers){
+    if ($sourceUsers.Name -notcontains $user.Name){
+        # The user should be deleted
+        $warning = $user.Name + " exists on database but is not in source control." 
+        Write-Warning $warning
+        if ($DeleteAdditional){
+            $msg = "Removing " + $user.Name
+            Write-Output $msg
+            Remove-DbaDbUser -User $user.Name -SqlInstance $SQLInstance -Database $Database
+        }
+        else {
+            $msg = "You should either add " + $user.Name + " to source control, manually delete it from the target database, or re-run this deployment with the -DeleteAdditional parameter."
+            Write-Output $msg
+        }
+    }
+    else {
+        # Need to verify if the user is supposed to live in this environment.
+        $IdMatch = [array]::IndexOf($sourceUsers.Name,$user.Name)
+        if ($sourceUsers[$IdMatch].Environment -notcontains $Environment){
+            # The user should be deleted
+            $warning = $user.Name + " exists on $SQLInstance.$Database but should not exist in $Environment." 
+            Write-Warning $warning
+            if ($DeleteAdditional){
+                $msg = "Removing " + $user.Name
+                Write-Output $msg
+                Remove-DbaDbUser -User $user.Name -SqlInstance $SQLInstance -Database $Database
+            }
+            else {
+                $msg = "You should either add the environment $Environment to " + $user.Name + " in source control, manually delete it from the target database, or re-run this deployment with the -DeleteAdditional parameter."
+                Write-Output $msg
+            }
+        }
+    } 
+}
+
