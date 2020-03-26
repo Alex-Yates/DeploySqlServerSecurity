@@ -8,6 +8,6 @@ Basic concept:
 2. DBAs (for example) will manage these simple json/xml source files. This allows full audit of access controls via source control.
 3. Changes are deployed by running DeploySecurity.ps1. This script will deploy the security, as defined by the JSON/XML files on a per environment basis.
 
-The /test/ directory will contain a bunch of pester tests to make sure that, for example, referential integrity is maintained in the JSON, that all users have an associated login and a default schema, and that all users have an appropriate environment tag. This could be run as part of a build process, for example, to catch any typos or mistakes with config.
+TestSecurity.ps1 will contain a bunch of pester tests to make sure that, for example, referential integrity is maintained in the JSON, that all users have an associated login and a default schema, and that all users have an appropriate environment tag. This could be run as part of a build process, for example, to catch any typos or mistakes with config.
 
 I'm currently looking for feedback on the general concept. Please feel free to add a GitHub issue with any feedback you may have.
