@@ -48,9 +48,9 @@ if (Test-Path -path $UsersFile){
     $SourceUsers = Get-Content $UsersFile | ConvertFrom-Json
 
 # Merging $DbUsers with $SourceUsers
-
     <#
-    FIRST: Create new empty array for users called $NewUsers
+    FIRST:
+    - Create new empty array for users called $NewUsers
     THEN:
         CASE 1: User.Name exists in both DbUsers and SourceUsers
          - Verify all details match. If not, write-warning.
@@ -61,17 +61,27 @@ if (Test-Path -path $UsersFile){
          - Create NewUser, based on DbUser version.
          - Add $NewUser to $NewUsers. 
         CASE 3: User.Name exists in SourceUsers but not DbUsers
-         - If $SourceUser.Environment -contains $Environent, remove $Environment.
+         - If $SourceUser.Environment -contains $Environment, remove $Environment.
          - If $SourceUser.Environment not empty, include $sourceUser
-    THEN:
+    FINALLY:
     - Sort $NewUsers alphabetically by $User.Name
     - Replace $SourceUsers with $NewUsers
      #>
 
-Write-Output "Merging DB users and existing source users."
+Write-Output "Merging users from DB and output directory."
 $NewUsers = @()
 
-Write-Warning "Implement merge functionality!"
+# Case 1 (See multi-line commen above)
+Write-Verbose "Merging users that exist in both DB and output directory."
+Write-Warning "Implement this merge functionality!"
+
+# Case 2 (See multi-line commen above)
+Write-Verbose "Adding users that exist in DB but not in output directory."
+Write-Warning "Implement this merge functionality!"
+
+# Case 3 (See multi-line commen above)
+Write-Verbose "Removing users that exist in output directory but do not exist in DB."
+Write-Warning "Implement this merge functionality!"
 
 # Exporting our data
 $NewUsers =  $NewUsers | ConvertTo-Json 
