@@ -23,15 +23,15 @@ else {
     New-Item -Path $OutputDir -ItemType Directory | out-null
 }
 
-# Getting all the users
+# Getting all the user data from the DB
 Write-Output "Reading existing users on $SQLInstance.$Database"
-$rawUsers = Get-DbaDbUser -SqlInstance $SQLInstance -Database $Database -ExcludeSystemUser
+$rawDbUsers = Get-DbaDbUser -SqlInstance $SQLInstance -Database $Database -ExcludeSystemUser
 
-# Simplifying our data
-Write-Output "Reformatting the data."
-$SimplifiedUsers = @()
+# Data in rawDbUsers is complicated. Simplifying it.
+Write-Output "Simplifying the data."
+$DbUsers = @()
 
-foreach ($user in $rawUsers){    
+foreach ($user in $rawDbUsers){    
     $tempUser = New-Object PSObject -Property @{
         Name = $user.Name
         Login = $user.Login
@@ -39,11 +39,42 @@ foreach ($user in $rawUsers){
         Environment = @()
     }
     $tempUser.Environment = $tempUser.Environment + $Environment
-    $SimplifiedUsers = $SimplifiedUsers + $tempUser
+    $DbUsers = $DbUsers + $tempUser
 }
 
+# Getting all the existing data from $UsersFile
+Write-Output "Merging with existing source data."
+if (Test-Path -path $UsersFile){
+    $SourceUsers = Get-Content $UsersFile | ConvertFrom-Json
+
+# Merging $DbUsers with $SourceUsers
+
+    <#
+    FIRST: Create new empty array for users called $NewUsers
+    THEN:
+        CASE 1: User.Name exists in both DbUsers and SourceUsers
+         - Verify all details match. If not, write-warning.
+         - Create NewUser, based on DbUser version.
+         - Add all additional environments from $SourceUser.Environment 
+         - Add $NewUser to $NewUsers. 
+        CASE 2: User.Name exists in DbUsers but not SourceUsers
+         - Create NewUser, based on DbUser version.
+         - Add $NewUser to $NewUsers. 
+        CASE 3: User.Name exists in SourceUsers but not DbUsers
+         - If $SourceUser.Environment -contains $Environent, remove $Environment.
+         - If $SourceUser.Environment not empty, include $sourceUser
+    THEN:
+    - Sort $NewUsers alphabetically by $User.Name
+    - Replace $SourceUsers with $NewUsers
+     #>
+
+Write-Output "Merging DB users and existing source users."
+$NewUsers = @()
+
+Write-Warning "Implement merge functionality!"
+
 # Exporting our data
-$SimplifiedUsers =  $SimplifiedUsers | ConvertTo-Json 
+$NewUsers =  $NewUsers | ConvertTo-Json 
 
 Write-Output "Writing simplified user data to $UsersFile"
-$SimplifiedUsers | Out-File -FilePath $UsersFile
+$NewUsers | Out-File -FilePath $UsersFile
