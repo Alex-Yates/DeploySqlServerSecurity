@@ -1,7 +1,7 @@
 # DeploySqlServerSecurity
 A bottom up rebuild of: https://github.com/Alex-Yates/GeneratePermissions
 
-Still a work in progress. A simple way to version your security in an environment aware manner.
+Still a work in progress. A simple way to version your database level security in an environment aware manner. (Users, role memberships etc.)
 
 Basic concept:
 1. Run GetSecurity.ps1 to generate source code for your users and role memberships. (Possibly also your roles as well, but I'd prefer to assume users are practicing role based security and that the roles are saved in an SSDT or Redgate source control project etc). Users are saved in a JSON (to do: or XML?) format with a tag defining which environment the users are supposed to live in ("DEV", "PROD" etc). (I.E. handling the problem that the production users and dev users should probably be different.) 
