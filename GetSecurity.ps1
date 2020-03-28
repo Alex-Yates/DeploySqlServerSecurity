@@ -11,6 +11,6 @@ if ($OutputDir -like ""){
 	$OutputDir = Join-Path -Path $PSScriptRoot -ChildPath "output"
 }
 
-$PSScriptRoot\GetUsers.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -OutputDir $OutputDir
-$PSScriptRoot\GetRoleMemberships.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -OutputDir $OutputDir
-$PSScriptRoot\TestSecurity.ps1 -SourceDirectory $OutputDir
+& $PSScriptRoot\GetUsers.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -OutputDir $OutputDir
+& $PSScriptRoot\GetRoleMemberships.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -OutputDir $OutputDir
+& $PSScriptRoot\TestSecurity.ps1 -SourceDir $OutputDir
