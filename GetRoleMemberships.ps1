@@ -16,6 +16,8 @@ if ($OutputDir -like ""){
 }
 $RoleMembersFile = Join-Path -Path $OutputDir -ChildPath "rolemembers_$Environment.json"
 
+$logFile = Join-Path $OutputDir -ChildPath "log.txt"
+
 # Reading the db role members
 $dbRoleMembers = Get-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database
 
@@ -26,7 +28,7 @@ if (Test-Path -path $RoleMembersFile){
 $newRoleMembers = @()
 
 For ($i=0; $i -lt $dbRoleMembers.Length; $i++){    
-    # If the role is not yet added to $newRoleMembers, add it.
+    # Pulling all the role memberships from the DB
     if ($newRoleMembers.Role -notcontains $dbRoleMembers[$i].Role){
         $tempRole = New-Object PSObject -Property @{
             Role = $dbRoleMembers[$i].Role
@@ -46,9 +48,54 @@ For ($i=0; $i -lt $dbRoleMembers.Length; $i++){
     }
 }
 
-Write-Host "ToDo: Sane merge dbRoleMembers with sourceRoleMemebers - rather than drop create"
 
-Write-Host "Total roles: " $newRoleMembers.length
+Write-Host $sourceRoleMembers.length "roles already exist in source"
+# CASE exists in both source and db: Take the new (db) version
+For ($i=0; $i -lt $newRoleMembers.Length; $i++){
+    if ($sourceRoleMembers.Role -contains $newRoleMembers[$i].Role){
+        $IdMatch = [array]::IndexOf($sourceRoleMembers.Role,$newRoleMembers[$i].Role)
+        if (Compare-Object $sourceRoleMembers[$IdMatch].Members $newRoleMembers[$i].Members) {
+            # Warning
+            $warning = $newRoleMembers[$i].Role + " already exists in source but the values do not match!"
+            Write-Warning $warning
+            Write-Host "    Updating source to match DB version."
+            Write-Host "    For more detail, see log file at: $logFile"
+            
+            # Logging
+            Get-Date -Format "yyyy/MM/dd HH:mm:ss" | Out-File -FilePath $logFile -Append
+            $newRoleMembers[$i].Role + " role already exists in source but the members do not match." | Out-File -FilePath $logFile -Append
+            "    Updating source to match DB version" | Out-File -FilePath $logFile -Append
+            "    Details (Arrows pointing left: member removed from role. Arrows pointing right: member added to role):" | Out-File -FilePath $logFile -Append
+            Compare-Object $sourceRoleMembers[$IdMatch].Members $newRoleMembers[$i].Members | Out-File -FilePath $logFile -Append
+        }
+        else {
+            Write-Host $newRoleMembers[$i].Role " already exists in source and the members match."
+        }
+    }
+    else {
+        Write-Host "Adding " $newRoleMembers[$i].Role " to source."
+    }
+}
+
+# CASE role exists in source but not db: Remove from source version
+For ($i=0; $i -lt $sourceRoleMembers.Length; $i++){
+    if ($newRoleMembers.Role -notcontains $sourceRoleMembers[$i].Role){
+        # Warning
+        $warning = "Removing all members of " + $sourceRoleMembers[$i].Role + " from source because they do not exist in DB."
+        Write-Warning $warning
+        Write-Host "    For more detail, see log file at: $logFile"
+
+        # Logging
+        Get-Date -Format "yyyy/MM/dd HH:mm:ss" | Out-File -FilePath $logFile -Append
+        "    Removing all members of " + $sourceRoleMembers[$i].Role + " from source because they do not exist in DB." | Out-File -FilePath $logFile -Append
+        "    " + $sourceRoleMembers[$i].Role + " had the following members:" | Out-File -FilePath $logFile -Append
+        foreach ($member in $sourceRoleMembers[$i].Members){
+            "        " + $member | Out-File -FilePath $logFile -Append
+        }
+    }
+}
+
+Write-Host "Total roles now in source: " $newRoleMembers.length
 
 $newRoleMembers = $newRoleMembers | Sort-Object -Property Name
 $newRoleMembers = $newRoleMembers | ConvertTo-Json
