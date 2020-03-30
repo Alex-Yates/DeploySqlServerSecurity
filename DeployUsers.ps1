@@ -28,6 +28,7 @@ $dbUsers = Get-DbaDbUser -SqlInstance $SQLInstance -Database $Database -ExcludeS
 $usersAlreadyInstalledCorrectly = 0
 $usersAdded = 0
 $usersWithMisconfiguredDefaultSchemas = 0
+$usersWithMisconfiguredDefaultSchemasList = @()
 $usersWithMisconfiguredLogins = 0
 $usersRemoved = 0
 
@@ -48,6 +49,7 @@ ForEach ($user in $SourceUsers){
                 $warning = $warning + "This should be rectified manually." 
                 Write-Warning "D'oh: $warning"
                 $usersWithMisconfiguredDefaultSchemas += 1
+                $usersWithMisconfiguredDefaultSchemasList += $user.Name
             }
             # Checking Login matches
             if ($user.Login -notlike $dbUsers[$IdMatch].Login){
@@ -120,8 +122,11 @@ Write-Output "Summary of deployed users:"
 
 Write-Output "    $usersAlreadyInstalledCorrectly user(s) already installed correctly on $SQLInstance.$Database"
 Write-Output "    $usersAdded user(s) added to $SQLInstance.$Database"
-Write-Output "    $usersWithMisconfiguredDefaultSchemas user(s) exist on $SQLInstance.$Database with misconfigured DEFAULT SCHEMAS. Please fix these manually!"
-Write-Output "    $usersWithMisconfiguredLogins user(s) exist on $SQLInstance.$Database with misconfigured LOGINS. These have been recreated with the correct login."
+Write-Output "    $usersWithMisconfiguredDefaultSchemas user(s) exist on $SQLInstance.$Database with misconfigured DEFAULT SCHEMA. Please fix these manually!"
+foreach ($user in $usersWithMisconfiguredDefaultSchemasList){
+    Write-Output "        - $user"
+}
+Write-Output "    $usersWithMisconfiguredLogins user(s) exist on $SQLInstance.$Database with misconfigured LOGIN. These have been recreated with the correct login."
 
 if ($DeleteAdditional){
     Write-Output "    $usersRemoved role user(s) removed from $SQLInstance.$Database"
