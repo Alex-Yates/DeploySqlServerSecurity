@@ -8,6 +8,9 @@ param(
 
 import-module dbatools
 $ErrorActionPreference = "stop"
+
+Write-Host "***** DEPLOYING ROLE MEMBERS *****"
+
 Test-DbaConnection $SQLInstance | out-null
 
 # Read source role members from source directory
@@ -16,12 +19,12 @@ $roleMembersFile = Join-Path -Path $SourceDir -ChildPath "rolemembers_$Environme
 if (-not(Test-Path -path $roleMembersFile)){
     Write-Error "No source file found at $roleMembersFile"
 }
-Write-Output "Reading source role members"
+Write-Output "Reading source role members from $roleMembersFile."
 $sourceRoleMembers = Get-Content $roleMembersFile | ConvertFrom-Json
 
 # Get existing role members from target DB and refactor to match source data structure
 
-Write-Output "Reading database role members"
+Write-Output "Reading existing role members on $SQLInstance.$Database."
 $rawDbRoleMembers = Get-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database
 
 $simpleDbRoleMembers = @()
@@ -47,10 +50,16 @@ For ($i=0; $i -lt $rawDbRoleMembers.Length; $i++){
 
 # First, add any role members that dont exist on target
 
+Write-Host "Deploying role members:"
+
+$membersAlreadyInstalledCorrectly = 0
+$membersAdded = 0
+$membersRemoved = 0
+
 for ($i=0; $i -lt $sourceRoleMembers.Length; $i++){
     $IdMatch = [array]::IndexOf($simpleDbRoleMembers.Role,$sourceRoleMembers[$i].Role)
     if ($IdMatch -eq -1){
-        # The role does not exist on the target database!
+        # The role does not have any members on the target database!
         Write-Warning $sourceRoleMembers[$i].Role " does not exist on $SQLInstance.$Database"
         Write-Output "    Unable to add the following members to " $sourceRoleMembers[$i].Role ":"
         foreach ($member in $sourceRoleMembers[$i].Members){
@@ -61,8 +70,15 @@ for ($i=0; $i -lt $sourceRoleMembers.Length; $i++){
         # Add any members that are missing on the target database.
         foreach ($member in $sourceRoleMembers[$i].Members){
             if($member -notin $simpleDbRoleMembers[$IdMatch].Members){
-                Write-Host "Adding user $member to role " $sourceRoleMembers[$i].Role " on $SQLInstance.$Database."
+                $msg = "    Adding user $member to role " + $sourceRoleMembers[$i].Role + " on $SQLInstance.$Database."
+                Write-Output $msg
                 Add-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $sourceRoleMembers[$i].Role -User $member
+                $membersAdded += 1
+            }
+            else{
+                $msg = "    $member already exists on role " + $sourceRoleMembers[$i].Role + " on $SQLInstance.$Database."
+                Write-Output $msg
+                $membersAlreadyInstalledCorrectly += 1
             }
         }
     }
@@ -74,18 +90,23 @@ for ($i=0; $i -lt $simpleDbRoleMembers.Length; $i++){
     $IdMatch = [array]::IndexOf($sourceRoleMembers.Role,$simpleDbRoleMembers[$i].Role)
     if ($IdMatch -eq -1){
         # The role does not exist in the source!
-        Write-Warning $simpleDbRoleMembers[$i].Role " does not have any users in source, but it does have users on $SQLInstance.$Database"
+        $warning = $simpleDbRoleMembers[$i].Role + " does not have any users in source, but it does have users on $SQLInstance.$Database"
+        Write-Warning $warning
         if ($DeleteAdditional){
-            Write-Output "    Removing the following users from " $sourceRoleMembers[$i].Role ":"
+            $msg = "    Removing the following users from " + $sourceRoleMembers[$i].Role + ":"
+            Write-Output $msg
             foreach ($member in $simpleDbRoleMembers[$i].Members){
                 Write-Output "        - $member"
                 Remove-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $sourceRoleMembers[$i].Role -User $member
+                $membersRemoved += 1
             }
         }
         else {
-            Write-Output "    The following users need to be removed from " $sourceRoleMembers[$i].Role ":"
+            $msg = "    The following users need to be removed from role: " + $sourceRoleMembers[$i].Role + ":"
+            Write-Output $msg
             foreach ($member in $simpleDbRoleMembers[$i].Members){
                 Write-Output "        - $member"
+                $membersRemoved += 1
             }
         }
     }
@@ -94,16 +115,31 @@ for ($i=0; $i -lt $simpleDbRoleMembers.Length; $i++){
         foreach ($member in $simpleDbRoleMembers[$i].Members){
             if($member -notin $sourceRoleMembers[$IdMatch].Members){
                 # The member exists on the target database but not in the source
-                Write-Warning $simpleDbRoleMembers[$i].Role " contains $member on $SQLInstance.$Database but this role member does not exist in source."
+                $warning = $simpleDbRoleMembers[$i].Role + " contains $member on $SQLInstance.$Database but this role member does not exist in source."
+                Write-Warning $warning
                 if ($DeleteAdditional){
                     Write-Output "    Removing $member from role " $simpleDbRoleMembers[$i].Role "."
                     Remove-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $simpleDbRoleMembers[$i].Role -User $member
-                    }
+                    $membersRemoved += 1
                 }
                 else {
-                    Write-Output "    $member needs to be removed from " $sourceRoleMembers[$i].Role "."
+                    $msg = "    $member needs to be removed from role " + $sourceRoleMembers[$i].Role + "."
+                    Write-Output $msg
+                    $membersRemoved += 1
                 }
             }
         }
     }
+}
+
+Write-Output "Summary of deployed role members:"
+
+Write-Output "    $membersAlreadyInstalledCorrectly role member(s) already installed correctly on $SQLInstance.$Database"
+Write-Output "    $membersAdded role member(s) added to $SQLInstance.$Database"
+
+if ($DeleteAdditional){
+    Write-Output "    $membersRemoved role member(s) removed from $SQLInstance.$Database"
+}
+else {
+    Write-Output "    $membersRemoved role member(s) need to be removed from $SQLInstance.$Database"
 }
