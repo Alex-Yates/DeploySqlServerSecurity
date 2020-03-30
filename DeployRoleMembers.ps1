@@ -55,15 +55,32 @@ Write-Host "Deploying role members:"
 $membersAlreadyInstalledCorrectly = 0
 $membersAdded = 0
 $membersRemoved = 0
+$membersOfMissingRoles = 0
+$missingRoles = @()
 
 for ($i=0; $i -lt $sourceRoleMembers.Length; $i++){
-    $IdMatch = [array]::IndexOf($simpleDbRoleMembers.Role,$sourceRoleMembers[$i].Role)
-    if ($IdMatch -eq -1){
+    $IdMatch = -1
+    if ($simpleDbRoleMembers.Role -contains $sourceRoleMembers[$i].Role){
+        $IdMatch = [array]::IndexOf($simpleDbRoleMembers.Role,$sourceRoleMembers[$i].Role)
+    }
+    # Verifying that the role exists on the target server
+    $role = Get-DbaDbRole -SqlInstance $SQLInstance -Database $Database -Role $sourceRoleMembers[$i].Role
+    if ($role.length -gt 0){
+        $roleExists = $true
+    }
+    else {
+        $roleExists = $false
+        $missingRoles += $sourceRoleMembers[$i].Role   
+    }
+    if (($IdMatch -eq -1) -and (-not $roleExists)){
         # The role does not have any members on the target database!
-        Write-Warning $sourceRoleMembers[$i].Role " does not exist on $SQLInstance.$Database"
-        Write-Output "    Unable to add the following members to " $sourceRoleMembers[$i].Role ":"
+        $warning = $sourceRoleMembers[$i].Role + " does not exist on $SQLInstance.$Database."
+        Write-Warning $warning
+        $msg = "    Unable to add the following members to " + $sourceRoleMembers[$i].Role + ":"
+        Write-Output $msg
         foreach ($member in $sourceRoleMembers[$i].Members){
             Write-Output "        - $member"
+            $membersOfMissingRoles += 1
         }
     }
     else {
@@ -72,7 +89,7 @@ for ($i=0; $i -lt $sourceRoleMembers.Length; $i++){
             if($member -notin $simpleDbRoleMembers[$IdMatch].Members){
                 $msg = "    Adding user $member to role " + $sourceRoleMembers[$i].Role + " on $SQLInstance.$Database."
                 Write-Output $msg
-                Add-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $sourceRoleMembers[$i].Role -User $member
+                Add-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $sourceRoleMembers[$i].Role -User $member -Confirm:$false
                 $membersAdded += 1
             }
             else{
@@ -87,22 +104,25 @@ for ($i=0; $i -lt $sourceRoleMembers.Length; $i++){
 # Then, check whether any need removing. If $DeleteAdditional, remove - otherwise just warn.
 
 for ($i=0; $i -lt $simpleDbRoleMembers.Length; $i++){
-    $IdMatch = [array]::IndexOf($sourceRoleMembers.Role,$simpleDbRoleMembers[$i].Role)
+    $IdMatch = -1
+    if ($sourceRoleMembers.Role -contains $simpleDbRoleMembers[$i].Role){
+        $IdMatch = [array]::IndexOf($sourceRoleMembers.Role,$simpleDbRoleMembers[$i].Role)
+    }
     if ($IdMatch -eq -1){
         # The role does not exist in the source!
         $warning = $simpleDbRoleMembers[$i].Role + " does not have any users in source, but it does have users on $SQLInstance.$Database"
         Write-Warning $warning
         if ($DeleteAdditional){
-            $msg = "    Removing the following users from " + $sourceRoleMembers[$i].Role + ":"
+            $msg = "    Removing the following users from " + $simpleDbRoleMembers[$i].Role + ":"
             Write-Output $msg
             foreach ($member in $simpleDbRoleMembers[$i].Members){
                 Write-Output "        - $member"
-                Remove-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $sourceRoleMembers[$i].Role -User $member
+                Remove-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $simpleDbRoleMembers[$i].Role.Role -User $member -Confirm:$false
                 $membersRemoved += 1
             }
         }
         else {
-            $msg = "    The following users need to be removed from role: " + $sourceRoleMembers[$i].Role + ":"
+            $msg = "    The following users need to be removed from role: " + $sourceRoleMembers[$IdMatch].Role + ":"
             Write-Output $msg
             foreach ($member in $simpleDbRoleMembers[$i].Members){
                 Write-Output "        - $member"
@@ -118,12 +138,13 @@ for ($i=0; $i -lt $simpleDbRoleMembers.Length; $i++){
                 $warning = $simpleDbRoleMembers[$i].Role + " contains $member on $SQLInstance.$Database but this role member does not exist in source."
                 Write-Warning $warning
                 if ($DeleteAdditional){
-                    Write-Output "    Removing $member from role " $simpleDbRoleMembers[$i].Role "."
-                    Remove-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $simpleDbRoleMembers[$i].Role -User $member
+                    $msg = "    Removing $member from role " + $simpleDbRoleMembers[$i].Role + "."
+                    Write-Output $msg
+                    Remove-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $simpleDbRoleMembers[$i].Role -User $member -Confirm:$false
                     $membersRemoved += 1
                 }
                 else {
-                    $msg = "    $member needs to be removed from role " + $sourceRoleMembers[$i].Role + "."
+                    $msg = "    $member needs to be removed from role " + $sourceRoleMembers[$IdMatch].Role + "."
                     Write-Output $msg
                     $membersRemoved += 1
                 }
@@ -142,4 +163,9 @@ if ($DeleteAdditional){
 }
 else {
     Write-Output "    $membersRemoved role member(s) need to be removed from $SQLInstance.$Database"
+}
+$msg = "    $membersOfMissingRoles role member(s) could not be added because the following roles are missing on $SQLInstance.$Database" + ":"
+Write-Output $msg
+foreach ($role in $missingRoles){
+    Write-Output "        - $role"
 }

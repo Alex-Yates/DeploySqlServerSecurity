@@ -8,15 +8,14 @@ param(
 
 $ErrorActionPreference = "stop"
 
+& $PSScriptRoot\TestSecurity.ps1 -SourceDir $SourceDir
+& $PSScriptRoot\PreDeploymentChecks.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -SourceDir $SourceDir
+
 if($DeleteAdditional){
-    & $PSScriptRoot\TestSecurity.ps1 -SourceDir $SourceDir -DeleteAdditional
-    & $PSScriptRoot\PreDeploymentChecks.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -SourceDir $SourceDir -DeleteAdditional
     & $PSScriptRoot\DeployUsers.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -SourceDir $SourceDir -DeleteAdditional
     & $PSScriptRoot\DeployRoleMembers.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -SourceDir $SourceDir -DeleteAdditional
 }
 else {
-    & $PSScriptRoot\TestSecurity.ps1 -SourceDir $SourceDir
-    & $PSScriptRoot\PreDeploymentChecks.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -SourceDir $SourceDir
     & $PSScriptRoot\DeployUsers.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -SourceDir $SourceDir
     & $PSScriptRoot\DeployRoleMembers.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -SourceDir $SourceDir
 }
