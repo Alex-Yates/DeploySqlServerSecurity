@@ -30,6 +30,7 @@ $usersAdded = 0
 $usersWithMisconfiguredDefaultSchemas = 0
 $usersWithMisconfiguredDefaultSchemasList = @()
 $usersWithMisconfiguredLogins = 0
+$usersWithMisconfiguredLoginsList = @()
 $usersRemoved = 0
 
 Write-Host "Deploying users:"
@@ -57,13 +58,20 @@ ForEach ($user in $SourceUsers){
                 $warning = $user.Name + " exists in both DB and source but login does not match. "
                 $warning = $warning + "The login on the DB is " + $dbUsers[$IdMatch].Login + ". "
                 $warning = $warning + "The login in source code is " + $user.Login + ". "
-                $warning = $warning + "Dropping the user and re-deploying with the correct login." 
-                Write-Warning "D'oh: $warning"
-                Remove-DbaDbUser -User $user.Name -SqlInstance $SQLInstance -Database $Database
-                $msg = "    Re-deploying " + $user.Name 
-                Write-Host $msg
-                New-DbaDbUser -SqlInstance $SQLInstance -Database $Database -Login $user.Login -Username $user.Name 
-                $usersWithMisconfiguredLogins += 1               
+                if ($DeleteAdditional){
+                    $warning = $warning + "Dropping the user and re-deploying with the correct login."
+                    Write-Warning "D'oh: $warning"
+                    Remove-DbaDbUser -User $user.Name -SqlInstance $SQLInstance -Database $Database
+                    $msg = "    Re-deploying " + $user.Name 
+                    Write-Host $msg
+                    New-DbaDbUser -SqlInstance $SQLInstance -Database $Database -Login $user.Login -Username $user.Name 
+                }
+                else {
+                    $warning = $warning + "This should be rectified manually."
+                    Write-Warning "D'oh: $warning"
+                }
+                $usersWithMisconfiguredLogins += 1 
+                $usersWithMisconfiguredLoginsList += $user.Name               
             }
             if ($userMatches){
                $msg = "    " + $user.Name + " already installed correctly." 
@@ -126,7 +134,15 @@ Write-Output "    $usersWithMisconfiguredDefaultSchemas user(s) exist on $SQLIns
 foreach ($user in $usersWithMisconfiguredDefaultSchemasList){
     Write-Output "        - $user"
 }
-Write-Output "    $usersWithMisconfiguredLogins user(s) exist on $SQLInstance.$Database with misconfigured LOGIN. These have been recreated with the correct login."
+if ($DeleteAdditional){
+    Write-Output "    $usersWithMisconfiguredLogins user(s) exist on $SQLInstance.$Database with misconfigured LOGIN. These have been recreated with the correct login."
+}
+else {
+    Write-Output "    $usersWithMisconfiguredLogins user(s) exist on $SQLInstance.$Database with misconfigured LOGIN. Please fix these manually!"
+}
+foreach ($user in $usersWithMisconfiguredLoginsList){
+    Write-Output "        - $user"
+}
 
 if ($DeleteAdditional){
     Write-Output "    $usersRemoved role user(s) removed from $SQLInstance.$Database"
