@@ -20,33 +20,29 @@ $usersFile = Join-Path -Path $SourceDir -ChildPath "users.json"
 $roleMembersFile = Join-Path -Path $SourceDir -ChildPath "rolemembers_$Environment.json"
 [array]$sourceRoleMembers = Get-Content $roleMembersFile | ConvertFrom-Json
 
-$errors = 0
+$errorCount = 0
 
 # Helper functions
 
 function checkUser($username){
-    $match = $true
     if ($sourceUsers.Name -contains $username){
-        # There should be an identical user in $rawDbUsers
+        # There should be a matching user in $rawDbUsers
         $matchingSourceUser = $sourceUsers | Where-Object {$_.Name -like $username}
         $matchingDbUser = $rawDbUsers | Where-Object {$_.Name -like $username}
-
+        
         # If there is no user with a matching username, fail the match
         if (!$matchingDbUser){
-            $match -eq $false
-            $errors += 1
             $warning = "USER $username does not exist on $SQLInstance.$Database."
             Write-Warning $warning
+            $script:errorCount += 1
         }
         
         # If the matched user has a different Login, fail the match
         if ($matchingDbUser -and ($matchingSourceUser.Login -notLike $matchingDbUser.Login)){
-            $match -eq $false
-            $errors += 1
             $warning = "USER $username has LOGIN " + $matchingSourceUser.Logi0n + " in $usersFile but " + $matchingDbUser.Login + " on $SQLInstance.$Database."
             Write-Warning $warning
+            $script:errorCount += 1
         }
-    return $match
     }
 }
 
@@ -58,19 +54,15 @@ function checkRoleMember($role){
 
         # There should be at least one matching role member in $rawDbRoleMembers
         if ($matchingDbRoleMembers.length -eq 0){
-            $errors += 1
             $warning = "ROLE $role either does not exist or has no members on $SQLInstance.$Database."
             Write-Warning $warning
+            $script:errorCount += 1
         }
         # The role should have the same members in both source and db
         elseif (Compare-Object $sourceRole.Members $dbMembers) {
-            # Warning
-            $warning = "ROLE $role has members in source and target but the values do not match!"
+            $warning = "ROLE $role has members in $roleMembersFile and in $SQLInstance.$Database but the members do not match!"
             Write-Warning $warning
-            $errors += 1
-            Write-Output "Source version on the left, DB version on the right. (Note this always appears at bottom of logs. Not sure why.):"
-            Write-Output (Compare-Object $sourceRole.Members $dbMembers)
-            
+            $script:errorCount += 1           
         }
     }
 }
@@ -79,10 +71,11 @@ function checkRoleMember($role){
 # Checking all the users in source exist on db
 foreach ($user in $sourceUsers){
     if ($user.Environment -contains $Environment){
-        checkuser($user.Name) | out-null
+        checkuser($user.Name)
     }
 }
 
+#Checking that all roles in source exist in db
 foreach ($role in $sourceRoleMembers.Role){
     checkRoleMember($role)
 }
@@ -93,6 +86,7 @@ foreach ($user in $rawDbUsers){
     if ($user.Name -notin $sourceUsersForEnvironment.Name){
         $warning = "USER " + $user.Name + " exists on $SQLInstance.$Database but does not exist in $usersFile for environment $Environment"
         Write-Warning $warning
+        $errorCount += 1
     }
 }
 
@@ -102,14 +96,13 @@ foreach ($role in $uniqueDbRolesWithMembers){
     if ($role -notin $sourceRoleMembers.Role){
         $warning = "ROLE " + $role + " has members on $SQLInstance.$Database but does not exist in $roleMembersFile"
         Write-Warning $warning
+        $errorCount += 1
     }
 }
 
-
-Write-Warning "Error handling at the end is broken. Always passes."
-# Throwing error if $errorCount > 0 to ensure DeplpoySecurity.ps1 stops before deployment
-if($errors -gt 0){
-    $errorMsg =  "Failed security validation with $errorCount inconsistencies! (See warnings.)"
+# Throwing error if $errorCount > 0 to ensure DeplpoySecurity.ps1 throws an error
+if($errorCount -gt 0){
+    $errorMsg =  "Failed security validation with $errorCount inconsistencies! (See warnings above.)"
     throw $errorMsg
 }
 else {
