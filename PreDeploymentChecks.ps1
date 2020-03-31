@@ -43,7 +43,7 @@ else {
 
 Write-Output " "
 Write-Output "*** CHECK: Do all the required DEFAULT SCHEMAS exist on $SQLInstance ***"
-Write-Warning "To do: What's the default schema situation?"
+Write-Warning "To do: Write this test. Not yet implemented."
 
 
 Write-Output " "
