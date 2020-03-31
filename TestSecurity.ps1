@@ -84,12 +84,23 @@ if ($missingUsers.length -gt 0){
     }
     Write-Error $msg 
     $errorCount += 1
-    $errorTypes += " Missing USERS in $usersFile."
+    $errorTypes += " Missing " + $missingUsers.length + " USERS in $usersFile."
 }
 else {
     Write-Output "All required USERS found in $usersFile."
 }
 
+Write-Output " "
+Write-Output "*** TEST: Check for any corrupt USERS (USERS without LOGINS) ***"
+Write-Warning "To do: implement this test!"
+
+Write-Output " "
+Write-Output "*** TEST: Check for any USERS without a DEFAULT SCHEMA ***"
+Write-Warning "To do: implement this test!"
+
+Write-Output " "
+Write-Output "*** TEST: Check for any USERS with DEFAULT SCHEMA other than 'dbo' (not yet supported) ***"
+Write-Warning "To do: implement this test!"
 
 # Throwing error if $errorCount > 0 to ensure DeplpoySecurity.ps1 stops before deployment
 if($errorCount -gt 0){
