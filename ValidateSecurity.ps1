@@ -106,5 +106,5 @@ if($errorCount -gt 0){
     throw $errorMsg
 }
 else {
-    Write-Output "All users and roles members on $SQLInstance.$Database consistent with $SourceDir for environment $Environment "
+    Write-Output "All users and roles members on $SQLInstance.$Database are consistent with $SourceDir for environment $Environment "
 }
