@@ -30,7 +30,7 @@ if ($corruptUsers.length -gt 0){
     }
     Write-Error $msg 
     $errorCount += 1
-    $errorTypes += " Missing LOGINS on $SQLInstance."
+    $errorTypes += " Missing " + $corruptUsers.length + " LOGINS on $SQLInstance."
 }
 else {
     Write-Output "All required LOGINS found on $SQLInstance."
@@ -48,13 +48,13 @@ Write-Output "Reading ROLES from $SQLInstance.$Database."
 $dbRoles = Get-DbaDbRole -SqlInstance $SQLInstance -Database $Database
 [array]$missingRoles = $sourceRoleMembers | Where-Object -Property Role -notin $dbRoles.Name
 if ($missingRoles.length -gt 0){
-    $msg = "Found " + $missingRoles.length + " missing role(s) on $SQLInstance.$Database. Please add the following ROLES to the database: "
+    $msg = "Found " + $missingRoles.length + " missing ROLE(S) on $SQLInstance.$Database. Please add the following ROLES to the database: "
     foreach ($role in $missingRoles.Role){
         $msg = $msg + $role + ", "
     }
     Write-Error $msg 
     $errorCount += 1
-    $errorTypes += " Missing ROLES on $SQLInstance.$Database."
+    $errorTypes += " Missing " + $missingRoles.length + " ROLES on $SQLInstance.$Database."
 }
 else {
     Write-Output "All required ROLES found on $SQLInstance."
