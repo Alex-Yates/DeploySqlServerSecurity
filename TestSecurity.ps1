@@ -3,10 +3,13 @@ param(
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()]$Environment
 )
 
+Write-Output ""
+Write-Output "***** TESTING SOURCE CODE AT $SourceDir FOR ENVIRONMENT $Environment *****"
+Write-Output ""
+
 Write-Warning "ToDo: Convert to Pester tests"
 $errorCount = 0
 $errorTypes = @()
-
 
 Write-Output " "
 Write-Output "*** TEST: Do all the required source files exist at $SourceDir ***"

@@ -9,7 +9,9 @@ param(
 import-module dbatools
 $ErrorActionPreference = "stop"
 
-Write-Host "***** DEPLOYING ROLE MEMBERS *****"
+Write-Output ""
+Write-Output "***** DEPLOYING ROLE MEMBERS FROM $SourceDir TO $Environment.$Database *****"
+Write-Output ""
 
 Test-DbaConnection $SQLInstance | out-null
 

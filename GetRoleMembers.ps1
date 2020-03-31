@@ -8,6 +8,10 @@ param(
 import-module dbatools
 $ErrorActionPreference = "stop"
 
+Write-Output ""
+Write-Output "***** EXPORTING ROLE MEMBERS FROM $Environment.$Database TO $SourceDir *****"
+Write-Output ""
+
 Test-DbaConnection $SQLInstance | out-null
 
 # Making the output directory
