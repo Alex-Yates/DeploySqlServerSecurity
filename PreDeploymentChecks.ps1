@@ -9,7 +9,7 @@ $errorCount = 0
 $errorTypes = @()
 
 Write-Output ""
-Write-Output "***** PERFORMING PRE-DEPLOYMENT CHECKS AGAINST $Database.$Database *****"
+Write-Output "***** PERFORMING PRE-DEPLOYMENT CHECKS AGAINST $SQLInstance.$Database *****"
 Write-Output ""
 
 Write-Output "Reading data from source files."
