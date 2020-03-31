@@ -32,8 +32,8 @@ if (-not(Test-Path -path $usersFile)){
 else {
     Write-Output "Found file at $usersFile"
 }
-$MajorPsVersion = $PSVersionTable.PSVersion.Major
-$MinorPsVersion = $PSVersionTable.PSVersion.Minor
+#$MajorPsVersion = $PSVersionTable.PSVersion.Major
+#$MinorPsVersion = $PSVersionTable.PSVersion.Minor
 #if(($MajorPsVersion -gt 6) -or (($MajorPsVersion -eq 6) -and ($MinorPsVersion -ge 1))){
 #    Write-Output " "
 #    Write-Output "*** CHECK: Do the source files contain valid syntax? ***"

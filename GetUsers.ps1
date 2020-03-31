@@ -112,7 +112,7 @@ For ($i=0; $i -lt $DbUsers.Length; $i++){
         $msg = "Merging existing user properties: " + $DbUsers[$i].Name
         Write-Output $msg
         $tempUser.Environment = $tempUser.Environment + $SourceUsers[$IdMatch].Environment
-        $tempUser.Environment = $tempUser.Environment | select -unique
+        $tempUser.Environment = $tempUser.Environment | Select-Object -unique
     }
     else{
         $msg = "Adding new user: " + $DbUsers[$i].Name
