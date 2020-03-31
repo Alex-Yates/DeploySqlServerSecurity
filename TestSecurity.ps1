@@ -124,7 +124,20 @@ else {
 
 Write-Output " "
 Write-Output "*** TEST: Check for any USERS with DEFAULT SCHEMA other than 'dbo' (not yet supported) ***"
-Write-Warning "To do: implement this test!"
+[array]$usersNotOnDbo = $sourceUsers | Where-Object -Property DefaultSchema -notlike "dbo"
+[array]$usersNotOnDbo = $usersNotOnDbo | Where-Object -Property DefaultSchema -notlike ""
+if ($usersNotOnDbo.length -gt 0){
+    $msg = "Found " + $usersNotOnDbo.length + " USERS with a DEFAULT SCHEMA other than 'dbo' in $usersFile. Please note, that DEFAULT SCHEMAS other than 'dbo' are not yet fully supported. You will need to set the DEFAULT SCHEMA for the following USER(S) manually for the time being: "
+    foreach ($user in $usersNotOnDbo){
+        $msg = $msg + $user.Name + ", "
+    }
+    Write-Error $msg 
+    $errorCount += 1
+    $errorTypes += " Found " + $usersNotOnDbo.length + " USERS with a DEFAULT SCHEMA other than 'dbo' in $usersFile."
+}
+else {
+    Write-Output "All USERS in $usersFile that have DEFAULT SCHEMAS are on 'dbo'."
+}
 
 # Throwing error if $errorCount > 0 to ensure DeplpoySecurity.ps1 stops before deployment
 if($errorCount -gt 0){
