@@ -108,7 +108,19 @@ else {
 
 Write-Output " "
 Write-Output "*** TEST: Check for any USERS without a DEFAULT SCHEMA ***"
-Write-Warning "To do: implement this test!"
+[array]$usersWithoutDefaultSchema = $sourceUsers | Where-Object -Property DefaultSchema -like ""
+if ($usersWithoutDefaultSchema.length -gt 0){
+    $msg = "Found " + $usersWithoutDefaultSchema.length + " USERS without a DEFAULT SCHEMA in $usersFile. Please add a DEFAULT SCHEMA for each of the following users: "
+    foreach ($user in $usersWithoutDefaultSchema){
+        $msg = $msg + $user.Name + ", "
+    }
+    Write-Error $msg 
+    $errorCount += 1
+    $errorTypes += " Found " + $usersWithoutDefaultSchema.length + " USERS without a DEFAULT SCHEMA in $usersFile."
+}
+else {
+    Write-Output "All USERS in $usersFile have a DEFAULT SCHEMA."
+}
 
 Write-Output " "
 Write-Output "*** TEST: Check for any USERS with DEFAULT SCHEMA other than 'dbo' (not yet supported) ***"
