@@ -42,12 +42,12 @@ else {
 
 
 Write-Output " "
-Write-Output "*** CHECK: Do all the required DEFAULT SCHEMAS exist on $SQLInstance ***"
+Write-Output "*** CHECK: Do all the required DEFAULT SCHEMAS exist on $SQLInstance.$Database ***"
 Write-Warning "To do: Write this test. Not yet implemented."
 
 
 Write-Output " "
-Write-Output "*** CHECK: Do all the required ROLES exist on $SQLInstance ***"
+Write-Output "*** CHECK: Do all the required ROLES exist on $SQLInstance.$Database ***"
 Write-Output "Reading ROLES from $SQLInstance.$Database."
 $dbRoles = Get-DbaDbRole -SqlInstance $SQLInstance -Database $Database
 [array]$missingRoles = $sourceRoleMembers | Where-Object -Property Role -notin $dbRoles.Name
