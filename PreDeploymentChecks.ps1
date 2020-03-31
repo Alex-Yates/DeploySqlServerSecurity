@@ -8,9 +8,11 @@ param(
 $errorCount = 0
 $errorTypes = @()
 
-
 Write-Output "Reading data from source files."
+$usersFile = Join-Path -Path $SourceDir -ChildPath "users.json"
 $sourceUsers = Get-Content $usersFile | ConvertFrom-Json
+
+$roleMembersFile = Join-Path -Path $SourceDir -ChildPath "rolemembers_$Environment.json"
 $sourceRoleMembers = Get-Content $roleMembersFile | ConvertFrom-Json
 
 
