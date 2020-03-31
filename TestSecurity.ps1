@@ -32,6 +32,12 @@ if (-not(Test-Path -path $usersFile)){
 else {
     Write-Output "Found file at $usersFile"
 }
+
+# # This check seems to be broken on my machine. 
+# # Possibly something to do with Test-Json only supported on later versions
+# # Possibly something to do with me having weird broken install of PS
+# # I've created a github issue to look into it here:
+# # https://github.com/Alex-Yates/DeploySqlServerSecurity/issues/7
 #$MajorPsVersion = $PSVersionTable.PSVersion.Major
 #$MinorPsVersion = $PSVersionTable.PSVersion.Minor
 #if(($MajorPsVersion -gt 6) -or (($MajorPsVersion -eq 6) -and ($MinorPsVersion -ge 1))){
