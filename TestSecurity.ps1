@@ -92,7 +92,19 @@ else {
 
 Write-Output " "
 Write-Output "*** TEST: Check for any corrupt USERS (USERS without LOGINS) ***"
-Write-Warning "To do: implement this test!"
+[array]$corruptUsers = $sourceUsers | Where-Object -Property Login -like ""
+if ($corruptUsers.length -gt 0){
+    $msg = "Found " + $corruptUsers.length + " corrupt USER(S) in $usersFile. Please add a LOGIN for each of the following users: "
+    foreach ($user in $corruptUsers){
+        $msg = $msg + $user.Name + ", "
+    }
+    Write-Error $msg 
+    $errorCount += 1
+    $errorTypes += " Found " + $corruptUsers.length + " corrupt USERS in $usersFile."
+}
+else {
+    Write-Output "All USERS in $usersFile have LOGINS."
+}
 
 Write-Output " "
 Write-Output "*** TEST: Check for any USERS without a DEFAULT SCHEMA ***"
