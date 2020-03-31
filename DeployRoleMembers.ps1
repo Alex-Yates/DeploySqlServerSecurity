@@ -91,7 +91,7 @@ for ($i=0; $i -lt $sourceRoleMembers.Length; $i++){
             if($member -notin $simpleDbRoleMembers[$IdMatch].Members){
                 $msg = "    Adding user $member to role " + $sourceRoleMembers[$i].Role + " on $SQLInstance.$Database."
                 Write-Output $msg
-                Add-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $sourceRoleMembers[$i].Role -User $member -Confirm:$false
+                Add-DbaDbRoleMember -SqlInstance $SQLInstance -Database $Database -Role $sourceRoleMembers[$i].Role -User $member -Confirm:$false -EnableException
                 $membersAdded += 1
             }
             else{

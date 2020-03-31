@@ -66,7 +66,7 @@ ForEach ($user in $SourceUsers){
                     Remove-DbaDbUser -User $user.Name -SqlInstance $SQLInstance -Database $Database
                     $msg = "    Re-deploying " + $user.Name 
                     Write-Host $msg
-                    New-DbaDbUser -SqlInstance $SQLInstance -Database $Database -Login $user.Login -Username $user.Name 
+                    New-DbaDbUser -SqlInstance $SQLInstance -Database $Database -Login $user.Login -Username $user.Name -EnableException
                 }
                 else {
                     $warning = $warning + "This should be rectified manually."
@@ -85,7 +85,7 @@ ForEach ($user in $SourceUsers){
             # The user needs to be added
             $msg = "    Deploying " + $user.Name 
             Write-Host $msg
-            New-DbaDbUser -SqlInstance $SQLInstance -Database $Database -Login $user.Login -Username $user.Name
+            New-DbaDbUser -SqlInstance $SQLInstance -Database $Database -Login $user.Login -Username $user.Name -EnableException
             $usersAdded += 1
         }
     }
