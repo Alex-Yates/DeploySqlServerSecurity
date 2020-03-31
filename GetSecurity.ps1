@@ -13,4 +13,4 @@ if ($OutputDir -like ""){
 
 & $PSScriptRoot\GetUsers.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -OutputDir $OutputDir
 & $PSScriptRoot\GetRoleMembers.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -OutputDir $OutputDir
-& $PSScriptRoot\TestSecurity.ps1 -SourceDir $OutputDir
+& $PSScriptRoot\TestSecurity.ps1 -SourceDir $OutputDir -Environment $Environment

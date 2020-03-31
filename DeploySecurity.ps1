@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = "stop"
 
-& $PSScriptRoot\TestSecurity.ps1 -SourceDir $SourceDir
+& $PSScriptRoot\TestSecurity.ps1 -SourceDir $SourceDir -Environment $Environment
 & $PSScriptRoot\PreDeploymentChecks.ps1 -SQLInstance $SQLInstance -Database $Database -Environment $Environment -SourceDir $SourceDir
 
 if($DeleteAdditional){

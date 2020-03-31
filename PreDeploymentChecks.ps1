@@ -9,37 +9,11 @@ $errorCount = 0
 $errorTypes = @()
 
 
-Write-Output " "
-Write-Output "*** CHECK: Do all the required source files exist at $SourceDir ***"
-# Reading the source files
-Write-Output "Reading source from $SourceDir."
-$roleMembersFile = Join-Path -Path $SourceDir -ChildPath "rolemembers_$Environment.json"
-if (-not(Test-Path -path $roleMembersFile)){
-    $msg = "No source file found for role members at $roleMembersFile"
-    Write-Error $msg
-    $errorCount += 1
-    $errorTypes += " No role members file found at $roleMembersFile."
-}
-else {
-    Write-Output "Found file at $roleMembersFile"
-}
-$usersFile = Join-Path -Path $SourceDir -ChildPath "users.json"
-if (-not(Test-Path -path $usersFile)){
-    $msg = "No source file found for users at $usersFile"
-    Write-Error $msg
-    $errorCount += 1
-    $errorTypes += " No users file found at $SourceDir."
-}
-else {
-    Write-Output "Found file at $usersFile"
-}
+Write-Output "Reading data from source files."
 $sourceUsers = Get-Content $usersFile | ConvertFrom-Json
 $sourceRoleMembers = Get-Content $roleMembersFile | ConvertFrom-Json
 
 
-Write-Output " "
-Write-Output "*** CHECK: Do the source files contain any data and it is formatted correctly? ***"
-Write-Warning "To do: Verify the source files"
 # Checking that logins exist for all users
 Write-Output " "
 Write-Output "*** CHECK: Do all the required LOGINS exist on $SQLInstance ***"
