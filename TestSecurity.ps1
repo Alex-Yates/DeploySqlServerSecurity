@@ -7,7 +7,6 @@ Write-Output ""
 Write-Output "***** TESTING SOURCE CODE AT $SourceDir FOR ENVIRONMENT $Environment *****"
 Write-Output ""
 
-Write-Warning "ToDo: Convert to Pester tests"
 $errorCount = 0
 $errorTypes = @()
 
@@ -90,7 +89,7 @@ if ($missingUsers.length -gt 0){
     $errorTypes += " Missing " + $missingUsers.length + " USERS in $usersFile."
 }
 else {
-    Write-Output "All required USERS found in $usersFile."
+    Write-Output "All required USERS for $Environment found in $usersFile."
 }
 
 Write-Output " "
